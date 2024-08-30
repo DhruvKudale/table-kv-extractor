@@ -10,6 +10,8 @@ import argparse
 from td import TableDetector
 from tsr import get_rows_from_yolo, get_cols_from_tatr, get_cells_from_rows_cols
 from utils import *
+from bs4 import BeautifulSoup
+import json
 
 # Set the TESSDATA_PREFIX environment variable
 # os.environ['TESSDATA_PREFIX'] = '/raid/ganesh/vishak/miniconda3/envs/coe/share'
@@ -40,10 +42,23 @@ def ocr_cells(cropped_img, cells):
             # Convert cell image to PIL Image for OCR
             cell_pil_img = Image.fromarray(cell_img)
             ocr_result = pytesseract.image_to_string(cell_pil_img, config='--psm 6')
-            print(ocr_result)
+            ocr_result.replace("\n", " ")
+            # print(ocr_result)
             ocr_data.append((row_idx, col_idx, ocr_result.strip()))
     return ocr_data
 
+
+def get_updated_html_output(cells, html_string):
+    soup = BeautifulSoup(html_string, 'html.parser')
+    trs = soup.find('tbody').find_all('tr')
+    for r, tr in enumerate(trs):
+        tds = tr.find_all('td')
+        for c, td in enumerate(tds):
+            bbox = cells[r + 1][c]
+            bbox = map(str, bbox)
+            bbox_attr = "bbox " + ' '.join(bbox)
+            td['title'] = bbox_attr
+    return soup
 
 
 
@@ -52,7 +67,7 @@ if __name__=="__main__":
     table_det = TableDetector()
     # images = pdf_to_images(args.pdf)
     # image = np.array(images[0])
-    image_file = 'first_page.png'
+    image_file = 'tsr/yolo-rows/7.png'
     image = cv2.imread(image_file)
     # plt.imsave("image.jpg", image)
     dets = table_det.predict(image=image)
@@ -65,28 +80,29 @@ if __name__=="__main__":
         #rows, cols = get_rows_cols_from_tatr(img_file)
         rows = get_rows_from_yolo(img_file)
         cols = get_cols_from_tatr(img_file)
-        print(len(rows))
-        print(len(cols))
+        # print(len(rows))
+        # print(len(cols))
 
         rows, cols = order_rows_cols(rows, cols)
 
         ## Visualize Rows and Columns
-        row_image = draw_bboxes(img_file, rows, color = (255, 66, 55), thickness = 2)
-        cols_image = draw_bboxes(img_file, cols, color= (22, 44, 255), thickness = 2)
-        cv2.imwrite('rows.jpg', row_image)
-        cv2.imwrite('cols.jpg', cols_image)
+        # row_image = draw_bboxes(img_file, rows, color = (255, 66, 55), thickness = 2)
+        # cols_image = draw_bboxes(img_file, cols, color= (22, 44, 255), thickness = 2)
+        # cv2.imwrite('rows.jpg', row_image)
+        # cv2.imwrite('cols.jpg', cols_image)
 
 
         ## Extracting Cells
 
         cells = get_cells_from_rows_cols(rows, cols)
+        print(cells)
 
         ## Visualize Extracted Cells
         all_cells = []
         for kr in cells.keys():
             all_cells += cells[kr]
-        cell_image = draw_bboxes(img_file, all_cells, color = (23, 255, 45), thickness = 1)
-        cv2.imwrite('cell.jpg', cell_image)
+        # cell_image = draw_bboxes(img_file, all_cells, color = (23, 255, 45), thickness = 1)
+        # cv2.imwrite('cell.jpg', cell_image)
         # print("Cells: ", cells)
         save_cells(cropped_img, cells, "./cells")
 
@@ -97,6 +113,35 @@ if __name__=="__main__":
     # Convert OCR data to a pandas DataFrame
     df = pd.DataFrame(all_ocr_data, columns=['Row', 'Column', 'Text'])
     df = df.pivot(index='Row', columns='Column', values='Text')
-    print(df)
+    #print(df)
     # Save DataFrame to a CSV file
-    df.to_csv('./extracted_table.csv', index=True)
+    #df.to_csv('./extracted_table.csv', index=True)
+    df_list = df.values.tolist()
+
+    # Make key value pairs
+    encoded = []
+
+    # for r in range(len(rows)):
+    #     for c in range(0, len(cols), 2):
+    #         item = {}
+    #         item['row'] = r + 1
+    #         item['col_of_key'] = c + 1
+    #         item['col_of_val'] = c + 2
+    #         item['key'] = df_list[r][c]
+    #         item['value'] = df_list[r][c + 1]
+    #         item['key_bbox'] = cells[r + 1][c]
+    #         item['val_bbox'] = cells[r + 1][c + 1]
+    #         encoded.append(item)
+    #
+    # # Writing to sample.json
+    # with open("sample.json", "w") as outfile:
+    #     json.dump(encoded, outfile)
+
+    html_string = df.to_html()
+    # print(html_string)
+
+    hocr_string = get_updated_html_output(cells, html_string)
+    print(hocr_string)
+
+
+
