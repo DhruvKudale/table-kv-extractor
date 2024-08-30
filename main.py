@@ -67,7 +67,7 @@ if __name__=="__main__":
     table_det = TableDetector()
     # images = pdf_to_images(args.pdf)
     # image = np.array(images[0])
-    image_file = 'tsr/yolo-rows/7.png'
+    image_file = 'td/samples/sample3.jpeg'
     image = cv2.imread(image_file)
     # plt.imsave("image.jpg", image)
     dets = table_det.predict(image=image)
@@ -86,10 +86,10 @@ if __name__=="__main__":
         rows, cols = order_rows_cols(rows, cols)
 
         ## Visualize Rows and Columns
-        # row_image = draw_bboxes(img_file, rows, color = (255, 66, 55), thickness = 2)
-        # cols_image = draw_bboxes(img_file, cols, color= (22, 44, 255), thickness = 2)
-        # cv2.imwrite('rows.jpg', row_image)
-        # cv2.imwrite('cols.jpg', cols_image)
+        row_image = draw_bboxes(img_file, rows, color = (255, 66, 55), thickness = 2)
+        cols_image = draw_bboxes(img_file, cols, color= (22, 44, 255), thickness = 2)
+        cv2.imwrite('rows.jpg', row_image)
+        cv2.imwrite('cols.jpg', cols_image)
 
 
         ## Extracting Cells
@@ -128,9 +128,15 @@ if __name__=="__main__":
             item['col_of_key'] = c + 1
             item['col_of_val'] = c + 2
             item['key'] = df_list[r][c]
-            item['value'] = df_list[r][c + 1]
+            try:
+                item['value'] = df_list[r][c + 1]
+            except:
+                item['value'] = ''
             item['key_bbox'] = cells[r + 1][c]
-            item['val_bbox'] = cells[r + 1][c + 1]
+            try:
+                item['val_bbox'] = cells[r + 1][c + 1]
+            except:
+                item['val_bbox'] = ''
             encoded_json.append(item)
 
     # Writing to sample.json

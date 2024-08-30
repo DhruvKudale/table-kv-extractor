@@ -77,11 +77,11 @@ def post_process_dets(height, width, dets, thresh):
         if ys[i + 1] - ys[i] > thresh:
             final_ys.append(ys[i])
     final_ys.append(height)
-    print(final_ys)
+    #print(final_ys)
     res = []
     for i in range(len(final_ys[:-1])):
         res.append([0, final_ys[i], width, final_ys[i + 1]])
-    print(res)
+    #print(res)
     return res
 
 
