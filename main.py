@@ -119,29 +119,30 @@ if __name__=="__main__":
     df_list = df.values.tolist()
 
     # Make key value pairs
-    encoded = []
+    encoded_json = []
 
-    # for r in range(len(rows)):
-    #     for c in range(0, len(cols), 2):
-    #         item = {}
-    #         item['row'] = r + 1
-    #         item['col_of_key'] = c + 1
-    #         item['col_of_val'] = c + 2
-    #         item['key'] = df_list[r][c]
-    #         item['value'] = df_list[r][c + 1]
-    #         item['key_bbox'] = cells[r + 1][c]
-    #         item['val_bbox'] = cells[r + 1][c + 1]
-    #         encoded.append(item)
-    #
-    # # Writing to sample.json
-    # with open("sample.json", "w") as outfile:
-    #     json.dump(encoded, outfile)
+    for r in range(len(rows)):
+        for c in range(0, len(cols), 2):
+            item = {}
+            item['row'] = r + 1
+            item['col_of_key'] = c + 1
+            item['col_of_val'] = c + 2
+            item['key'] = df_list[r][c]
+            item['value'] = df_list[r][c + 1]
+            item['key_bbox'] = cells[r + 1][c]
+            item['val_bbox'] = cells[r + 1][c + 1]
+            encoded_json.append(item)
+
+    # Writing to sample.json
+    with open("sample.json", "w") as outfile:
+        json.dump(encoded_json, outfile)
 
     html_string = df.to_html()
     # print(html_string)
 
     hocr_string = get_updated_html_output(cells, html_string)
     print(hocr_string)
-
+    print(encoded_json)
+    # You need hocr_string and encoded_json
 
 
